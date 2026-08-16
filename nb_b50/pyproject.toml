@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nb-b50"
+version = "0.1.0"
+description = "NoneBot2 插件：maimai DX B50 成绩图（扫码绑定查询）"
+requires-python = ">=3.10"
+dependencies = [
+    "nonebot2>=2.0.0",
+    "nonebot-adapter-onebot>=2.4.0",
+    "httpx",
+    "pycryptodome",
+    "pytz",
+]
+
+[tool.setuptools]
+packages = ["nb_b50"]
+
+[tool.setuptools.package-data]
+nb_b50 = ["py.typed"]

@@ -1,0 +1,4 @@
+# Eaquira / SDGB 核心依赖（机器人虚拟环境另见 bot/）
+httpx>=0.27
+pytz
+pycryptodome>=3.20

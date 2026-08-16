@@ -1,0 +1,7 @@
+# 统一换行符：脚本与代码强制 LF，Windows 批处理用 CRLF
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.bat text eol=crlf
