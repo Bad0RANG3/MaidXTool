@@ -56,11 +56,22 @@ help_cmd = on_command(
 )
 fp_cmd = on_command("fp", aliases={"发票", "发功能票", "FP"}, rule=to_me(), priority=5, block=True)
 
-HELP_TEXT = """📋 B50 机器人命令
-/b50 <二维码>       完整 B50 图（FC/AP/同步/DX徽标，查完自动登出）
-/fp <二维码> [2~5]  发票（无库存才下发，免费，固定 1 张）
+HELP_TEXT = """📋 功能列表
+/b50 <二维码>  查询完整 B50 成绩图
+/fp <二维码> [2~5]  开发票"""
 
-群里需@机器人；私聊更安全；每次都要新二维码；写操作前确认是自己的账号；小黑屋等 15 分钟"""
+# 连续失败计数（按用户）：>=3 次提示找管理员，成功或提示后清零
+_fail_counts: dict = {}
+
+
+def _fail_text(user_id: str) -> str:
+    """失败提示：中断/单次失败请重试；连续失败请找管理员。"""
+    n = _fail_counts.get(user_id, 0) + 1
+    if n >= 3:
+        _fail_counts[user_id] = 0
+        return "❌ 持续失败，请联系管理员"
+    _fail_counts[user_id] = n
+    return "❌ 失败，请重试"
 
 
 @help_cmd.handle()
@@ -79,46 +90,46 @@ async def handle_b50(bot: Bot, event: MessageEvent):
             "（机台登录界面二维码解析出的字符串，每次查询都要新码；私聊发送更安全）"
         )
         return
+    user_id = event.get_user_id()
     client = MaimaiClient()
     try:
+        await b50_cmd.send("📋 开始任务：查询完整 B50 成绩图…")
         note = ""
         async with httpx.AsyncClient(verify=False) as http:
-            await b50_cmd.send("扫码换取凭证…")
-            user_id, token, _preview = await exchange_qr(client, http, qr)
+            uid, token, _preview = await exchange_qr(client, http, qr)
             # 同账号 10 分钟内缓存命中则零登录（避免反复登录触发小黑屋）
-            cached = load_records_cache(user_id)
+            cached = load_records_cache(uid)
             if cached and cached.get("rating") and cached.get("records"):
                 payload = rating_to_payload_full(
                     cached["rating"], DB, music_index(cached["records"])
                 )
                 note = "（本地缓存，未登录）"
             else:
-                await b50_cmd.send("登录并拉取 B50 + 成绩记录…")
-                login_ts = await login_with_token(client, http, user_id, token)
+                login_ts = await login_with_token(client, http, uid, token)
                 try:
                     payload = await fetch_b50_payload_full(
-                        client, http, user_id, token, DB, use_cache=True
+                        client, http, uid, token, DB, use_cache=True
                     )
                 finally:
                     # 查询结束必登出（UserLogoutApi 回传登录时刻，服务器按此校验会话）
                     try:
-                        await logout_session(client, http, user_id, timestamp=login_ts)
+                        await logout_session(client, http, uid, timestamp=login_ts)
                         note = "✅ 已登出"
-                    except Exception as e:  # noqa: BLE001
-                        note = f"⚠️ 登出异常：{e}"
+                    except Exception:  # noqa: BLE001
+                        note = "⚠️ 登出异常"
         b35 = len(payload["calculatedEntries"]["b35"])
         b15 = len(payload["calculatedEntries"]["b15"])
         if b35 == 0 and b15 == 0:
-            await b50_cmd.finish("未获取到 B50 数据（该账号无成绩或曲库缺名）。")
+            await b50_cmd.finish("❌ 未获取到 B50 数据（该账号无成绩或曲库缺名）。")
             return
-        await b50_cmd.send(f"渲染完整 B50 图（B35={b35} / B15={b15}）…")
         img = await render_oneshot(payload)
+        _fail_counts.pop(user_id, None)
         tail = f"\n{note}" if note else ""
         await b50_cmd.finish(MessageSegment.image(img) + tail)
     except FinishedException:
         raise
-    except Exception as e:  # noqa: BLE001
-        await b50_cmd.finish(f"生成失败：{e}")
+    except Exception:  # noqa: BLE001
+        await b50_cmd.finish(_fail_text(user_id))
 
 
 @fp_cmd.handle()
@@ -130,7 +141,7 @@ async def handle_fp(bot: Bot, event: MessageEvent):
         await fp_cmd.finish(
             "格式：/fp <二维码字符串> [Ticket ID 2~5]\n"
             "例：/fp SGWCMAID... 3\n"
-            "（发票：该 Ticket 库存非 0 时拒绝下发；免费；固定 1 张；约 1 分钟）"
+            "（发票：该 Ticket 库存非 0 时拒绝下发；免费；固定 1 张；提交后需等待约 2 分钟）"
         )
         return
     charge_id = 3
@@ -142,13 +153,16 @@ async def handle_fp(bot: Bot, event: MessageEvent):
 
     from sdgb.write_ops import issue_ticket_with_qr
 
-    async def say(msg: str):
-        await fp_cmd.send(msg)
-
+    user_id = event.get_user_id()
     try:
-        msg = await issue_ticket_with_qr(qr, charge_id=charge_id, progress=say)
+        await fp_cmd.send(
+            "📋 开始任务：开发票…\n"
+            "提交后需等待约 2 分钟，期间请勿重复提交或退出"
+        )
+        msg = await issue_ticket_with_qr(qr, charge_id=charge_id, progress=None)
+        _fail_counts.pop(user_id, None)
         await fp_cmd.finish(msg)
     except FinishedException:
         raise
-    except Exception as e:  # noqa: BLE001
-        await fp_cmd.finish(f"发票失败：{e}")
+    except Exception:  # noqa: BLE001
+        await fp_cmd.finish(_fail_text(user_id))
