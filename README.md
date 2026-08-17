@@ -62,7 +62,7 @@ bash start.sh
 > 完整部署步骤（NapCat 配置、守护进程、排障）见 [docs/DEPLOY.md](docs/DEPLOY.md)。
 
 二维码：机台登录界面屏幕上的二维码（SGWCMAID... 字符串，10 分钟有效），
-可用 `qr-tool`（浏览器扫码页 http://127.0.0.1:8787）解析图片，然后 `/b50 <二维码>` 查完整 B50 图。
+拍下后用任意扫码工具解析成字符串，发 `/b50 <二维码>` 查完整 B50 图。
 
 ## 目录结构
 
@@ -80,7 +80,6 @@ bash start.sh
 ├── nb_b50/                  # NoneBot2 插件（全部 / 命令）
 ├── bot/                     # 机器人运行环境（venv / bot.py / .env / 启动脚本）
 ├── napcat/                  # NapCat 协议端（QQ 小号托管，gitignore）
-├── qr-tool/                 # 浏览器扫码解析工具（Node 静态服务 8787）
 ├── docs/
 │   └── DEPLOY.md            # Windows / Linux 部署文档
 ├── b50_cli.py               # B50 渲染 CLI（--uid 免登录，调试）

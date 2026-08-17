@@ -25,10 +25,6 @@ bot/.venv/
 bot/.env
 *.log
 
-# 二维码解析缓存
-qr-tool/decoded_qr.txt
-qr-tool/decoded_qr.log
-
 # 图片输出
 *.png
 *.jpg
