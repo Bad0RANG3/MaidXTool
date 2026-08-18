@@ -9,9 +9,13 @@ WORKDIR /app
 
 RUN addgroup --system app && adduser --system --ingroup app --home /app app
 
+# 可选的 PyPI 镜像源（国内构建加速）：
+#   docker build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple -t maidx-tool:latest .
+ARG PIP_INDEX_URL=https://pypi.org/simple
+
 COPY requirements.txt ./
 RUN python -m pip install --upgrade pip \
-    && python -m pip install --no-cache-dir -r requirements.txt \
+    && python -m pip install --no-cache-dir --index-url "${PIP_INDEX_URL}" -r requirements.txt \
         "nonebot2>=2.0.0" \
         "nonebot-adapter-onebot>=2.4.0" \
         "fastapi>=0.100" \

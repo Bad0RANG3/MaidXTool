@@ -1,3 +1,7 @@
+# 发布版编排：只拉取镜像、不构建。
+# 用法：先把镜像推到 Docker Hub / 私有 registry（见 docker/README.md），
+#       然后在服务器上：docker compose -f docker-compose.release.yml up -d
+# 自定义镜像名：MAIDX_IMAGE=bad0rang3/maidxtool:0.1.0 docker compose -f docker-compose.release.yml up -d
 services:
   napcat:
     image: mlikiowa/napcat-docker:latest
@@ -5,24 +9,17 @@ services:
     environment:
       NAPCAT_UID: "${NAPCAT_UID:-1000}"
       NAPCAT_GID: "${NAPCAT_GID:-1000}"
-      # 预置 OneBot v11 正向 WebSocket 服务端（0.0.0.0:3001）。
-      # 这是“开箱即用”的关键：NapCat 官方镜像通过 MODE=ws 把
-      # /app/templates/ws.json 复制为 onebot11.json，登录 QQ 后自动生效，
-      # b50-bot 即可通过 ws://napcat:3001 直连，无需在 WebUI 手动配置网络。
+      # 预置 OneBot v11 正向 WebSocket 服务端（0.0.0.0:3001），登录 QQ 后自动生效。
       MODE: ws
-      # WebUI 登录页访问令牌（默认 napcat），可用环境变量 WEBUI_TOKEN 覆盖。
       WEBUI_TOKEN: "${WEBUI_TOKEN:-napcat}"
     ports:
-      # NapCat WebUI: use this locally to log in the bot QQ account.
       - "127.0.0.1:6099:6099"
     volumes:
       - napcat_qq:/app/.config/QQ
       - napcat_config:/app/napcat/config
 
   b50-bot:
-    build:
-      context: .
-    image: maidx-tool:latest
+    image: "${MAIDX_IMAGE:-bad0rang3/maidxtool:0.1.0}"
     restart: unless-stopped
     depends_on:
       - napcat
@@ -33,9 +30,7 @@ services:
       # 连接 NapCat 的 OneBot v11 正向 WebSocket（MODE=ws 预置的 3001 服务端）。
       ONEBOT_WS_URLS: '["ws://napcat:3001"]'
       B50_DATA_DIR: /data
-    # No inbound ports: the bot connects outbound to NapCat over WebSocket.
     volumes:
-      # Retains B50/token/music caches between container replacements.
       - b50_data:/data
 
 volumes:

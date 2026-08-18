@@ -41,6 +41,22 @@ isLogin=1 = 玩家登不上去的返回：服务器判定该账号当前有发�
 - `/b50` 同账号 10 分钟内重复查询走本地缓存，命中零登录
 - 登录失败（凭证过期/小黑屋）请换新二维码重试
 
+## 快速开始（Docker，推荐 / 服务端开箱即用）
+
+一条命令拉起 NapCat（QQ 协议端）+ 机器人，WebSocket 已预置好，
+**唯一手动步骤是扫码登录 QQ**：
+
+```bash
+cp sdgb/.settings.py sdgb/settings.py   # 按需填写机厅信息
+docker compose up -d --build
+docker compose logs napcat | grep -E "WebUi (Token|User Panel Url)"  # 取 WebUI 地址
+# 浏览器打开上面的地址 -> 扫码登录机器人 QQ -> 完成
+```
+
+登录后 NapCat 自动监听 `ws://napcat:3001`，机器人自动连上（日志出现
+`OneBot V11 | Bot <QQ号> connected`），私聊发 `/help` 即可使用。
+详见 [docker/README.md](docker/README.md) 与 [docs/DEPLOY.md](docs/DEPLOY.md)。
+
 ## 快速开始（Windows）
 
 ```bat

@@ -95,9 +95,14 @@ bash bot/start.sh      # NapCat 已在跑（含 Docker）时只拉 NoneBot
 
 ---
 
-## 三、Docker 部署（推荐）
+## 三、Docker 部署（推荐，开箱即用）
 
 仓库已提供一键编排（`docker-compose.yml`），同时拉起 NapCat（OneBot 协议端）与 B50 机器人，适合 Linux 服务器 / NAS / Windows Docker Desktop。
+
+**WebSocket 已预置好**：compose 给 NapCat 设了 `MODE=ws`，官方镜像会自动启用
+OneBot v11 **正向 WebSocket 服务端（0.0.0.0:3001）**，并把配置写入
+`onebot11.json`；登录 QQ 后 NapCat 自动加载它，B50 机器人即通过
+`ws://napcat:3001` 连上。整个链路**唯一手动步骤就是扫码登录 QQ**。
 
 ### 1. 准备机厅配置
 
@@ -113,15 +118,23 @@ cp sdgb/.settings.py sdgb/settings.py   # 然后填写机厅信息
 docker compose up -d --build
 ```
 
-首次启动后登录机器人 QQ：
+### 3. 登录机器人 QQ（唯一手动步骤）
 
 ```bash
-docker compose logs napcat   # 查看 WebUI Token
+docker compose logs napcat | grep -E "WebUi (Token|User Panel Url)"
 ```
 
-打开 `http://127.0.0.1:6099/webui` 扫码登录（该端口仅建议本机访问，勿暴露公网）。
+用日志里的完整地址打开 WebUI 扫码登录（首次启动 NapCat 会把默认 token 随机化，
+所以地址以日志为准；也可用 `WEBUI_TOKEN=<强密码> docker compose up -d` 固定它）。
+该端口仅建议本机访问，勿暴露公网。
 
-### 3. 验证
+登录成功后自动完成：
+
+1. NapCat 加载预置 OneBot v11 配置，3001 正向 WS 开始监听；
+2. B50 机器人自动连上，日志出现 `OneBot V11 | Bot <QQ号> connected`；
+3. QQ 私聊机器人发 `/help` 返回功能菜单，即开箱可用。
+
+### 4. 验证
 
 ```bash
 docker compose ps
@@ -130,14 +143,18 @@ docker compose logs -f b50-bot
 
 NoneBot 日志出现 `OneBot V11 | Bot <QQ号> connected` 即链路打通。
 
-### 4. 运维
+### 5. 运维
 
 - 改完 `sdgb/settings.py` 后重新构建并重启：`docker compose up -d --build b50-bot`
 - `docker compose down`：停止（保留 QQ 登录态与数据卷）
 - `git pull && docker compose up -d --build`：升级
+- 内网/离线迁移：`docker save maidx-tool:latest mlikiowa/napcat-docker:latest | gzip > maidx-stack.tar.gz`，目标机 `gunzip -c ... | docker load` 后 `docker compose up -d`（免构建）
 
 QQ 登录态、NapCat 配置与 B50 缓存分别保存在命名卷 `napcat_qq`、`napcat_config`、`b50_data` 中；`docker compose down -v` 会删除它们，需重新登录。
 
+> 旧部署升级：若之前未配 `MODE=ws` 时已登录过，需删除 NapCat 卷里的
+> `onebot11_<QQ号>.json`（或 WebUI 里给账号新建 3001 正向 WS），让预置配置重新生效。
+>
 > 仅构建机器人镜像：`docker build -t maidx-tool:latest .`，独立运行方式见 `docker/README.md`。
 
 ## 四、验证与使用
@@ -157,6 +174,7 @@ QQ 登录态、NapCat 配置与 B50 缓存分别保存在命名卷 `napcat_qq`�
 | `/b50` 报「凭证可能已过期」 | 二维码 10 分钟有效，换新码重试 |
 | `isLogin=1`（小黑屋） | 等 15 分钟自动解除，期间不要反复登录；同账号 10 分钟内重复 `/b50` 走本地缓存 |
 | Linux 下 NapCat 起不来 | 改用 Docker 部署，确认 WS 服务端可达 `127.0.0.1:3001` |
+| Docker 拉 `mlikiowa/napcat-docker` 超时/失败 | 国内网络给 Docker 配 registry mirror（见 `docker/README.md`），或 `docker save`/`load` 离线迁移 |
 | 群里发命令没反应 | 群聊需 @机器人；私聊直接发 |
 | Windows 无法同时跑主号 QQ | QQ NT 单实例限制：机器人运行时桌面主号 QQ 需关闭 |
 
