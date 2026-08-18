@@ -95,7 +95,52 @@ bash bot/start.sh      # NapCat 已在跑（含 Docker）时只拉 NoneBot
 
 ---
 
-## 三、验证与使用
+## 三、Docker 部署（推荐）
+
+仓库已提供一键编排（`docker-compose.yml`），同时拉起 NapCat（OneBot 协议端）与 B50 机器人，适合 Linux 服务器 / NAS / Windows Docker Desktop。
+
+### 1. 准备机厅配置
+
+```bash
+cp sdgb/.settings.py sdgb/settings.py   # 然后填写机厅信息
+```
+
+`sdgb/settings.py` 含密钥（已加入 `.gitignore`），部署时以只读卷挂载进容器，不打包进镜像。
+
+### 2. 构建并启动
+
+```bash
+docker compose up -d --build
+```
+
+首次启动后登录机器人 QQ：
+
+```bash
+docker compose logs napcat   # 查看 WebUI Token
+```
+
+打开 `http://127.0.0.1:6099/webui` 扫码登录（该端口仅建议本机访问，勿暴露公网）。
+
+### 3. 验证
+
+```bash
+docker compose ps
+docker compose logs -f b50-bot
+```
+
+NoneBot 日志出现 `OneBot V11 | Bot <QQ号> connected` 即链路打通。
+
+### 4. 运维
+
+- `docker compose restart b50-bot`：改完配置后重启机器人
+- `docker compose down`：停止（保留 QQ 登录态与数据卷）
+- `git pull && docker compose up -d --build`：升级
+
+QQ 登录态、NapCat 配置与 B50 缓存分别保存在命名卷 `napcat_qq`、`napcat_config`、`b50_data` 中；`docker compose down -v` 会删除它们，需重新登录。
+
+> 仅构建机器人镜像：`docker build -t maidx-tool:latest .`，详见 `docker/README.md`。
+
+## 四、验证与使用
 
 1. QQ 里私聊机器人发 `/help`，返回菜单即成功
 2. 机台登录界面拍下二维码，用任意扫码工具解析出字符串（SGWCMAID...）
@@ -103,7 +148,7 @@ bash bot/start.sh      # NapCat 已在跑（含 Docker）时只拉 NoneBot
 
 ---
 
-## 四、常见问题
+## 五、常见问题
 
 | 现象 | 处理 |
 |------|------|

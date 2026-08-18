@@ -1,0 +1,35 @@
+﻿# Runtime artifacts and local secrets
+.git/
+.venv/
+bot/.venv/
+bot/.env
+sdgb/settings.py
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.log
+*.db
+*.db-shm
+*.db-wal
+
+# Runtime caches are mounted at /data instead
+records_cache.json
+token_cache.json
+sdgb/music_data_cache.json
+
+# Local protocol-client binaries and user data
+napcat/
+
+# Documentation and local development helpers
+.gitignore
+启动机器人.bat
+start.sh
+b50_cli.py
+napcat_guard.py
+
+# Build files and repo docs (not needed at runtime)
+Dockerfile
+.dockerignore
+docker-compose.yml
+docs/
+README.md

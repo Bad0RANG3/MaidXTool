@@ -18,6 +18,8 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+
+from .runtime import DATA_DIR
 from typing import Awaitable, Callable, Optional
 
 import httpx
@@ -25,7 +27,7 @@ import httpx
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
-TOKEN_CACHE = ROOT / "token_cache.json"
+TOKEN_CACHE = DATA_DIR / "token_cache.json"
 
 Progress = Optional[Callable[[str], Awaitable[None]]]
 

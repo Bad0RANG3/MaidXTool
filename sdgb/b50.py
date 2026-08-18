@@ -12,12 +12,14 @@ import json
 import logging
 from pathlib import Path
 
+from .runtime import DATA_DIR
+
 import httpx
 
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
-CACHE_PATH = ROOT / "sdgb" / "music_data_cache.json"
+CACHE_PATH = DATA_DIR / "music_data_cache.json"
 MUSIC_DATA_URL = "https://www.diving-fish.com/api/maimaidxprober/music_data"
 ONESHOOT_URL = "https://miruku.dxrating.net/functions/render-oneshot/v0?pixelated=1"
 

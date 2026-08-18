@@ -14,11 +14,13 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+from .runtime import DATA_DIR
+
 logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
-TOKEN_CACHE = ROOT / "token_cache.json"
-RECORDS_CACHE = ROOT / "records_cache.json"
+TOKEN_CACHE = DATA_DIR / "token_cache.json"
+RECORDS_CACHE = DATA_DIR / "records_cache.json"
 RECORDS_CACHE_TTL_MIN = 10  # 缓存有效时长：避免反复登录触发小黑屋
 
 # comboStatus/syncStatus -> oneshot 徽标 token

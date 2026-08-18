@@ -1,4 +1,4 @@
-# Eaquira / SDGB 核心依赖（机器人虚拟环境另见 bot/）
+# Core Eaquira / SDGB dependencies (bot runtime deps live in nb_b50/pyproject.toml)
 httpx>=0.27
 pytz
 pycryptodome>=3.20

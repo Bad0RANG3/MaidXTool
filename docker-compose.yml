@@ -1,0 +1,38 @@
+﻿services:
+  napcat:
+    image: mlikiowa/napcat-docker:latest
+    restart: unless-stopped
+    environment:
+      NAPCAT_UID: "${NAPCAT_UID:-1000}"
+      NAPCAT_GID: "${NAPCAT_GID:-1000}"
+    ports:
+      # NapCat WebUI: use this locally to log in the bot QQ account.
+      - "127.0.0.1:6099:6099"
+    volumes:
+      - napcat_qq:/app/.config/QQ
+      - napcat_config:/app/napcat/config
+
+  b50-bot:
+    build:
+      context: .
+    image: maidx-tool:latest
+    restart: unless-stopped
+    depends_on:
+      - napcat
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+      DRIVER: "~httpx+~websockets"
+      ONEBOT_WS_URLS: '["ws://napcat:3001"]'
+      B50_DATA_DIR: /data
+    # No inbound ports: the bot connects outbound to NapCat over WebSocket.
+    volumes:
+      # This file contains site-specific values and must not be committed.
+      - ./sdgb/settings.py:/app/sdgb/settings.py:ro
+      # Retains B50/token/music caches between container replacements.
+      - b50_data:/data
+
+volumes:
+  napcat_qq:
+  napcat_config:
+  b50_data:
