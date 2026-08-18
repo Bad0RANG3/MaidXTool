@@ -4,7 +4,7 @@
 用法（QQ）:
     /help              查看全部命令说明
     /b50 <二维码>      完整版 B50 图（每次使用新码；查完自动登出）
-    /fp <二维码> [2~5] 发票：该票库存为 0 才下发，免费，固定 1 张
+    /fp <二维码> <数字>  发票：数字=发几倍票（2~5），该票库存为 0 才下发，免费，固定 1 张
 
 凭证纪律:
     - /b50 每次使用都要新二维码换新 token，流程 登录 -> 查询 -> 登出；
@@ -58,7 +58,7 @@ fp_cmd = on_command("fp", aliases={"发票", "发功能票", "FP"}, rule=to_me()
 
 HELP_TEXT = """📋 功能列表
 /b50 <二维码>  查询完整 B50 成绩图
-/fp <二维码> [2~5]  开发票"""
+/fp <二维码> 数字  开发票（数字=几倍票，2~5）"""
 
 # 连续失败计数（按用户）：>=3 次提示找管理员，成功或提示后清零
 _fail_counts: dict = {}
@@ -93,8 +93,7 @@ async def handle_b50(bot: Bot, event: MessageEvent):
     user_id = event.get_user_id()
     client = MaimaiClient()
     try:
-        await b50_cmd.send("📋 开始任务：查询完整 B50 成绩图…")
-        note = ""
+        await b50_cmd.send("📋 任务已开始")
         async with httpx.AsyncClient(verify=False) as http:
             uid, token, _preview = await exchange_qr(client, http, qr)
             # 同账号 10 分钟内缓存命中则零登录（避免反复登录触发小黑屋）
@@ -103,7 +102,6 @@ async def handle_b50(bot: Bot, event: MessageEvent):
                 payload = rating_to_payload_full(
                     cached["rating"], DB, music_index(cached["records"])
                 )
-                note = "（本地缓存，未登录）"
             else:
                 login_ts = await login_with_token(client, http, uid, token)
                 try:
@@ -114,9 +112,8 @@ async def handle_b50(bot: Bot, event: MessageEvent):
                     # 查询结束必登出（UserLogoutApi 回传登录时刻，服务器按此校验会话）
                     try:
                         await logout_session(client, http, uid, timestamp=login_ts)
-                        note = "✅ 已登出"
                     except Exception:  # noqa: BLE001
-                        note = "⚠️ 登出异常"
+                        pass
         b35 = len(payload["calculatedEntries"]["b35"])
         b15 = len(payload["calculatedEntries"]["b15"])
         if b35 == 0 and b15 == 0:
@@ -124,8 +121,7 @@ async def handle_b50(bot: Bot, event: MessageEvent):
             return
         img = await render_oneshot(payload)
         _fail_counts.pop(user_id, None)
-        tail = f"\n{note}" if note else ""
-        await b50_cmd.finish(MessageSegment.image(img) + tail)
+        await b50_cmd.finish(MessageSegment.image(img))
     except FinishedException:
         raise
     except Exception:  # noqa: BLE001

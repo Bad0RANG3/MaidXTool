@@ -330,10 +330,7 @@ async def issue_ticket_with_qr(
 
             # 6) 回查验证：默认关（信任返回码）；verify=True 才查 GetUserChargeApi
             if not verify:
-                return (
-                    f"✅ 发票完成：{charge_id} 号票 ×1 已通过两步组合下发"
-                    f"（未回查验证）"
-                )
+                return f"✅ {charge_id}倍票已上传"
             after = await client.call_api(
                 h, "GetUserChargeApi", build_user_data(user_id, token), user_id
             )
