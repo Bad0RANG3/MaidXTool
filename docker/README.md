@@ -1,4 +1,4 @@
-﻿# Compose deployment
+# Compose deployment
 
 `docker-compose.yml` launches both required services:
 

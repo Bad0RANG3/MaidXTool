@@ -1,4 +1,4 @@
-﻿FROM python:3.12-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -14,6 +14,8 @@ RUN python -m pip install --upgrade pip \
     && python -m pip install --no-cache-dir -r requirements.txt \
         "nonebot2>=2.0.0" \
         "nonebot-adapter-onebot>=2.4.0" \
+        "fastapi>=0.100" \
+        "uvicorn>=0.23" \
         "websockets>=10.0"
 
 COPY --chown=app:app . .

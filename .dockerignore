@@ -1,4 +1,4 @@
-﻿# Local-only artifacts (sdgb/settings.py is intentionally baked into the image)
+# Local-only artifacts (sdgb/settings.py is intentionally baked into the image)
 .git/
 .venv/
 bot/.venv/
