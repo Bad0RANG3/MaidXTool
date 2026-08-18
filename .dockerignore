@@ -1,9 +1,8 @@
-﻿# Runtime artifacts and local secrets
+﻿# Local-only artifacts (sdgb/settings.py is intentionally baked into the image)
 .git/
 .venv/
 bot/.venv/
 bot/.env
-sdgb/settings.py
 __pycache__/
 **/__pycache__/
 *.py[cod]

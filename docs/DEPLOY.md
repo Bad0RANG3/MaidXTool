@@ -105,7 +105,7 @@ bash bot/start.sh      # NapCat 已在跑（含 Docker）时只拉 NoneBot
 cp sdgb/.settings.py sdgb/settings.py   # 然后填写机厅信息
 ```
 
-`sdgb/settings.py` 含密钥（已加入 `.gitignore`），部署时以只读卷挂载进容器，不打包进镜像。
+`sdgb/settings.py` 含密钥，已在本地填写好后**直接打进镜像**（已加入 `.gitignore`，不进 Git 仓库）。注意：镜像里带有机厅密钥，切勿推送到公开镜像仓库。
 
 ### 2. 构建并启动
 
@@ -132,13 +132,13 @@ NoneBot 日志出现 `OneBot V11 | Bot <QQ号> connected` 即链路打通。
 
 ### 4. 运维
 
-- `docker compose restart b50-bot`：改完配置后重启机器人
+- 改完 `sdgb/settings.py` 后重新构建并重启：`docker compose up -d --build b50-bot`
 - `docker compose down`：停止（保留 QQ 登录态与数据卷）
 - `git pull && docker compose up -d --build`：升级
 
 QQ 登录态、NapCat 配置与 B50 缓存分别保存在命名卷 `napcat_qq`、`napcat_config`、`b50_data` 中；`docker compose down -v` 会删除它们，需重新登录。
 
-> 仅构建机器人镜像：`docker build -t maidx-tool:latest .`，详见 `docker/README.md`。
+> 仅构建机器人镜像：`docker build -t maidx-tool:latest .`，独立运行方式见 `docker/README.md`。
 
 ## 四、验证与使用
 

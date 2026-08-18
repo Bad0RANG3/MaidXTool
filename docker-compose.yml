@@ -27,8 +27,6 @@
       B50_DATA_DIR: /data
     # No inbound ports: the bot connects outbound to NapCat over WebSocket.
     volumes:
-      # This file contains site-specific values and must not be committed.
-      - ./sdgb/settings.py:/app/sdgb/settings.py:ro
       # Retains B50/token/music caches between container replacements.
       - b50_data:/data
 

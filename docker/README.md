@@ -5,10 +5,15 @@
 - **NapCat** for the QQ/OneBot connection;
 - **B50 Bot** for the NoneBot plugin and maimai requests.
 
+`sdgb/settings.py` (arcade config) is baked into the image at build time, so the
+image runs standalone without any host file mounts. Runtime caches still live in
+the `b50_data` volume.
+
 ## First deployment
 
 1. Install Docker Engine / Docker Desktop with the Compose plugin.
-2. Create the site-specific settings file (it is deliberately ignored by Git):
+2. Make sure `sdgb/settings.py` exists locally with the arcade configuration
+   (start from the template, edit it, and keep it out of Git):
 
    ```bash
    cp sdgb/.settings.py sdgb/settings.py
@@ -20,7 +25,8 @@
    Copy-Item sdgb/.settings.py sdgb/settings.py
    ```
 
-   Edit `sdgb/settings.py` and fill in the arcade configuration before continuing.
+   > Security note: because the settings are baked in, anyone with the image has
+   > the keys. Do not push this image to a public registry.
 3. Build and start the stack:
 
    ```bash
@@ -48,8 +54,8 @@
 # Follow logs
 docker compose logs -f
 
-# Restart only the bot after changing settings
-docker compose restart b50-bot
+# Rebuild the bot after changing sdgb/settings.py (baked into the image)
+docker compose up -d --build b50-bot
 
 # Stop while keeping QQ login/configuration and data caches
 docker compose down
@@ -69,4 +75,8 @@ If NapCat is already deployed elsewhere, build the application image directly:
 docker build -t maidx-tool:latest .
 ```
 
-Run it with `sdgb/settings.py` mounted read-only, a writable `/data` volume, and `ONEBOT_WS_URLS` set to that NapCat instance, for example `ws://host.docker.internal:3001` on Docker Desktop.
+Run it standalone with a writable `/data` volume and `ONEBOT_WS_URLS` set to that NapCat instance, for example `ws://host.docker.internal:3001` on Docker Desktop:
+
+```bash
+docker run -d --name b50-bot   -e ONEBOT_WS_URLS='["ws://host.docker.internal:3001"]'   -v b50_data:/data   maidx-tool:latest
+```
